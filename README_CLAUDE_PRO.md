@@ -47,14 +47,14 @@ Project folder: "ls_equity_fund." This layer handles ALL data ingestion — no s
 
 ```
 Project Structure/
-├── data/            # Layer 1 (data ingestion)
+├── data/            # Layer 1 (data ingestion) - this layer
 ├── factors/         # Layer 2 (scoring engine)
 ├── analysis/        # Layer 3 (Claude AI analysis)
 ├── portfolio/       # Layer 4 (portfolio construction)
 ├── risk/            # Layer 5 (risk management)
 ├── execution/       # Layer 6 (Alpaca execution)
 ├── reporting/       # Layer 7 (reports)
-├── dashboard/       # Streamlit dashboard
+├── dashboard/       # Layer 7 (Streamlit dashboard)
 ├── cache/           # SQLite + cached files
 ├── output/          # CSVs, logs, reports
 ├── config.yaml      # All parameters
@@ -65,34 +65,44 @@ Project Structure/
 
 ### 5 Data Sources
 
-| # | Source | Module | What It Does |
-|---|--------|--------|--------------|
-| 1 | **Universe** | `data/universe.py` | Scrape current S&P 500 list from Wikipedia. Store ticker, company name, GICS sector, sub-industry. Cache locally, refresh weekly. Also maintain benchmark tickers: SPY, QQQ, IWM, DIA, sector ETFs (XLK, XLF, XLV, XLE, XLI, XLC, XLY, XLP, XLB, XLRE, XLU), ^VIX, TLT, HYG. |
-| 2 | **Market Data + Fundamentals** | `data/market_data.py` + `data/fundamentals.py` | Daily OHLCV via yfinance for all universe + benchmarks. 3yr lookback. Incremental updates — only fetch new data since last stored date. SQLite table "daily_prices". Fundamentals: quarterly + annual income stmt, balance sheet, cash flow via yfinance. Calculate 24 derived ratios: ROE, ROA, gross/operating/net margin, revenue growth YoY/QoQ, earnings growth YoY/QoQ, debt/equity, FCF yield, current ratio, AR/revenue, CFO/NI, accruals ratio, retained earnings, working capital, total liabilities, EBIT, R&D expense, shares outstanding, dividends paid, buybacks, asset turnover.
-| 3 | **SEC Filings + Insider** | `data/sec_data.py` | Connect to SEC EDGAR EFTS API. Headers: User-Agent with email, 8 req/sec rate limit. For each ticker fetch: latest 10-K (full doc for Risk Factors), latest 10-Q (MD&A), recent 8-K filings, Form 4 insider transactions (last 180 days). Parse Form 4 XML into "insider_transactions" table: ticker, insider name, insider title, transaction_type, transaction_code, shares, price, date, ownership type.Distinguish open-market purchases (code P) from grants/exercises (A, M, F). Flag CEO/CFO purchases. Flag cluster buying (3+ insiders within 30 days same ticker). Add --no-filings flag to skip SEC for fast daily runs. Add --forms flag for selective pulls. |
-| 4 | **Institutional Holdings** | `data/institutional.py` | Fetch 13-F filings from SEC EDGAR for 9 hedge funds: Citadel, Point72, Bridgewater, Tiger Global, Third Point, Berkshire Hathaway, Appaloosa, Baupost, Pershing Square. Parse: fund name, ticker, shares held, market value, report_date. Calculate per ticker: number of tracked funds holding, net change from prior quarter. Flag tickers with 3+ funds opening new positions simultaneously. Add --no-13f flag for fast daily runs. |
-| 5 | **Short Interest + Estimates** | `data/short_interest.py` + `data/estimates.py` | Fetch from yfinance .info: shares_short, short ratio, short percent of float. Daily snapshots in SQLite table "short_interest". Refresh daily. |
-| 6 | **Earnings Transcripts** | `data/transcripts.py` |  Fetch forward EPS estimate, price target consensus via yfinance. Store as daily snapshots in "analyst_estimates" table. Revisions factor needs 30+ days of snapshots to compute 30/60/90-day deltas. Refresh daily.|
-| 7 | **Earnings Calendar** | `data/earnings_calendar.py` | Fetch upcoming earnings dates for next 30 days across the universe. Refresh daily. |
-| 8 | **Earnings Transcripts** | `data/transcript.py` | If FMP_API_KEY in .env, fetch latest transcript from Financial Modeling Prep API. Store in "earnings_transcripts" table. Only fetch for long/short candidates, not entire universe. If no FMP key, skip gracefully and log. |
-| 9 | **Provider Abstraction** | `data/providers.py` | Create provider layer that routes to best available data source: - If POLYGON_API_KEY in .env: use Polygon for daily prices (licensed exchange data) - If FMP_API_KEY in .env: use FMP for transcripts + structured financials - If FRED_API_KEY in .env: use FRED for yield curve, credit spread, fed funds rate. - Default fallback: yfinance for prices/fundamentals, SEC EDGAR for filings. Log which provider is active: "Using Polygon for prices" or "Falling back to yfinance"
+#### 1: **Universe** (data/universe.py):
+Scrape current S&P 500 list from Wikipedia. Store ticker, company name, GICS sector, sub-industry. Cache locally, refresh weekly. Also maintain benchmark tickers: SPY, QQQ, IWM, DIA, sector ETFs (XLK, XLF, XLV, XLE, XLI, XLC, XLY, XLP, XLB, XLRE, XLU), ^VIX, TLT, HYG.
+
+#### 2: **Market Data + Fundamentals** (data/market_data.py + data/fundamentals.py):
+Daily OHLCV via yfinance for all universe + benchmarks. 3yr lookback. Incremental updates — only fetch new data since last stored date. SQLite table "daily_prices". Fundamentals: quarterly + annual income stmt, balance sheet, cash flow via yfinance. Calculate 24 derived ratios: ROE, ROA, gross/operating/net margin, revenue growth YoY/QoQ, earnings growth YoY/QoQ, debt/equity, FCF yield, current ratio, AR/revenue, CFO/NI, accruals ratio, retained earnings, working capital, total liabilities, EBIT, R&D expense, shares outstanding, dividends paid, buybacks, asset turnover.
+
+#### 3: **SEC Filings + Insider** (data/sec_data.py):
+Connect to SEC EDGAR EFTS API. Headers: User-Agent with email, 8 req/sec rate limit. For each ticker fetch: latest 10-K (full doc for Risk Factors), latest 10-Q (MD&A), recent 8-K filings, Form 4 insider transactions (last 180 days). Parse Form 4 XML into "insider_transactions" table: ticker, insider name, insider title, transaction_type, transaction_code, shares, price, date, ownership type.Distinguish open-market purchases (code P) from grants/exercises (A, M, F). Flag CEO/CFO purchases. Flag cluster buying (3+ insiders within 30 days same ticker). Add --no-filings flag to skip SEC for fast daily runs. Add --forms flag for selective pulls.
+
+#### 4: **Institutional Holdings** (data/institutional.py):
+Fetch 13-F filings from SEC EDGAR for 9 hedge funds: Citadel, Point72, Bridgewater, Tiger Global, Third Point, Berkshire Hathaway, Appaloosa, Baupost, Pershing Square. Parse: fund name, ticker, shares held, market value, report_date. Calculate per ticker: number of tracked funds holding, net change from prior quarter. Flag tickers with 3+ funds opening new positions simultaneously. Add --no-13f flag for fast daily runs.
+
+#### 5: **Short Interest + Estimates** (data/short_interest.py + data/estimates.py):
+Fetch from yfinance .info: shares_short, short ratio, short percent of float. Daily snapshots in SQLite table "short_interest". Refresh daily.
+
+#### 6: **Earnings Transcripts** (data/transcripts.py):
+Fetch forward EPS estimate, price target consensus via yfinance. Store as daily snapshots in "analyst_estimates" table. Revisions factor needs 30+ days of snapshots to compute 30/60/90-day deltas. Refresh daily.
+
+#### 7: **Earnings Calendar** (data/earnings_calendar.py): 
+Fetch upcoming earnings dates for next 30 days across the universe. Refresh daily.
+
+#### 8: **Earnings Transcripts** (data/transcript.py):
+If FMP_API_KEY in .env, fetch latest transcript from Financial Modeling Prep API. Store in "earnings_transcripts" table. Only fetch for long/short candidates, not entire universe. If no FMP key, skip gracefully and log. 
+
+#### 9: **Provider Abstraction** (data/providers.py):
+Create provider layer that routes to best available data source: 
+- If POLYGON_API_KEY in .env: use Polygon for daily prices (licensed exchange data)
+- If FMP_API_KEY in .env: use FMP for transcripts + structured financials
+- If FRED_API_KEY in .env: use FRED for yield curve, credit spread, fed funds rate.
+- Default fallback: yfinance for prices/fundamentals, SEC EDGAR for filings. 
+Log which provider is active: "Using Polygon for prices" or "Falling back to yfinance"
 
 === ENTRY POINT ===
 run_data.py:
-Arguments: --no-filings, --no-13f
-Run all data refreshes in order: universe -> prices -> fundamentals -> short interest -> estimates -> earnings calendar -> transcripts -> SEC filings (unless --no-filings) -> 13-F (unless --no-13f). Log everything to output/run.log.
+- Arguments: --no-filings, --no-13f
+- Run all data refreshes in order: universe -> prices -> fundamentals -> short interest -> estimates -> earnings calendar -> transcripts -> SEC filings (unless --no-filings) -> 13-F (unless --no-13f). Log everything to output/run.log.
+
 Print summary: tickers updated, price bars added, filings cached, insider txns parsed.
-
-
-### Entry Point
-
-```bash
-python run_data.py [--no-filings] [--no-13f]
-```
-
-- Runs all refreshes in order → logs to `output/run.log`  
-- **First run:** ~1–2 hours  
-- **Daily updates:** ~10 minutes  
 
 ---
 
