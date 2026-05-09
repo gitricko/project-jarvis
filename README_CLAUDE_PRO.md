@@ -46,7 +46,7 @@ Project folder: "ls_equity_fund." This layer handles ALL data ingestion — no s
 ### Project Structure
 
 ```
-App-Service-Folder/
+Project Structure/
 ├── data/            # Layer 1 (data ingestion)
 ├── factors/         # Layer 2 (scoring engine)
 ├── analysis/        # Layer 3 (Claude AI analysis)
@@ -63,7 +63,7 @@ App-Service-Folder/
 
 ---
 
-### 5 Core Data Sources
+### 5 Data Sources
 
 | # | Source | Module | What It Does |
 |---|--------|--------|--------------|
