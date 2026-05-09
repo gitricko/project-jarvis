@@ -126,51 +126,54 @@ Build the scoring engine: 8 factors with 27 sub-factors. All scores are 0-100 pe
 
 ### Factor Details
 
-#### 1. Momentum (factors/momentum.py) — 6 sub-factors:
-12-1 month return (skip recent 1mo to avoid reversal), 6-month return, 3-month return, acceleration (recent 3m minus older 3m), 52-week-high proximity (price / 52w high), relative strength vs sector ETF (6m stock return minus sector ETF return).
+#### 1. ﻿﻿﻿Momentum (factors/momentum.py) - 6 sub-factors: 
+12-1 month return (skip recent 1mo to avoid reversal), 6-month return, 3-month return, acceleration (recent 3m minus older 3m), 52-week-high proximity (price / 52w high - George & Hwang 2004), relative strength vs sector ETF (6m stock return minus sector ETF return - isolates stock-specific momentum from sector beta).
 
-#### 2. Value (factors/value.py) — 6 sub-factors:
-Forward earnings yield (1/forward P/E), book-to-price, FCF yield, EV/EBITDA (invert), shareholder yield (TTM buybacks + dividends / mkt cap), sales-to-EV (revenue / EV).
+#### 2. ﻿﻿﻿Value (factors/value.py) - 6 sub-factors:
+Forward earnings yield (1/forward P/E), book-to-price, FCF yield, EV/EBITDA (invert), shareholder yield (TTM buybacks + dividends / mkt cap), sales-to-EV (revenue / EV - works where P/E breaks on negative or volatile earnings).
 
-#### 3. Quality (factors/quality.py) — 8 sub-factors:
-ROE stability (std dev of 12Q ROEs, invert), gross margin level, gross margin trend (latest minus 4Q ago), debt/equity (invert), CFO/NI (higher = real cash earnings), accruals ratio ((NI-CFO)/TA, invert).
-Piotroski F-Score (1-9): 9 binary signals — positive ROA, positive CFO, rising ROA, CFO > NI, falling D/E, rising current ratio, no dilution, rising gross margin, rising asset turnover. Color code: green >=7, amber <=3.
-Altman Z-Score: 1.2*(WC/TA)+1.4*(RE/TA)+3.3*(EBIT/TA)+0.6*(MktCap/TL)+1.0*(Sales/TA). >2.99 = "safe", 1.81-2.99 = "grey zone", <1.81 = "distress".
+#### 3. ﻿﻿﻿Quality (factors/quality.py) - 8 sub-factors: 
+ROE stability (std dev of 12Q ROEs, invert), gross margin level, gross margin trend (latest minus 4Q ago), debt/equity (invert), CFO/NI (higher = real cash earnings), accruals ratio ((NI-CFO)/TA, invert - high accruals predict underperformance), Piotroski F-Score (1-9): 9 binary signals - positive ROA, positive CFO, rising ROA, CFO > NI, falling D/E, rising current ratio, no dilution, rising gross margin, rising asset turnover. Color code: green >=7, amber <=3. Altman Z-Score: 1.2*(WC/TA)+1.4*(RE/TA) +3.3*(EBIT/TA) +0. 6* (MktCap/TL)+1.0* (Sales/TA) .
+>2.99 = "safe" (green), 1.81-2.99 = "grey zone", <1.81 = "distress" (amber).
 
-#### 4. Growth (factors/growth.py) — 5 sub-factors:
-Revenue growth YoY, earnings growth YoY, revenue growth acceleration (latest YoY minus 4Q-ago YoY), R&D intensity (R&D expense / revenue), free cash flow growth YoY.
+#### 4. Growth (factors/growth.py) - 5 sub-factors:
+Revenue growth YoY, earnings growth YoY,
+revenue growth acceleration (latest YoY minus
+4Q-ago YoY), R&D intensity (R&D expense / revenue - high R&D in tech/healthcare tends to outperform long-term), free cash flow growth YoY (harder to manipulate than earnings).
 
-#### 5. Estimate Revisions (factors/revisions.py) — 3 sub-factors:
-30-day change in consensus next-Q EPS, 60-day change, 90-day change. Degenerate (all scores = 50) until ~30 days of snapshots accumulate.
+#### 5. Estimate Revisions (factors/revisions.py) - 3 sub-factors:
+30-day change in consensus next-Q EPS, 60-day change,
+90-day change. Degenerate (all
+scores = 50) until ~30 days of snapshots accumulate. Equal-weight available deltas.
 
-#### 6. Short Interest (factors/short_interest.py) — 3 sub-factors:
+#### 6. Short Interest (factors/short_interest.py) - 3 sub-factors:
 Short percent of float, days to cover, change in short interest vs prior period.
 For LONGS: declining short interest scores higher. For SHORTS: increasing scores higher.
 
-#### 7. Insider Activity (factors/insider.py) — 3 sub-factors:
-Net dollar flow over 90 days from Form 4 data. CEO/CFO open-market purchases weighted 3x vs other insiders. Cluster-buy flag (3+ insiders within 30 days) = bonus. Only count transaction code P (purchase) and S (sale), ignore A/M/F.
+#### 7. ﻿﻿﻿Insider Activity (factors/insider-py) - 3 sub-factors: 
+Net dollar flow over 90 days from Form 4 data. CEO/CFO open-market purchases weighted 3x vs other insiders. Cluster-buy flag (3+ insiders within 30 days) = bonus. Only count transaction code P (purchase) and S (sale), ignore A/M/F. No data = sector median (50).
 
-#### 8. Institutional Flow (factors/institutional.py) — 3 sub-factors:
+#### 8. ﻿﻿﻿Institutional Flow (factors/institutional.py) - 3 sub-factors: 
 Number of tracked funds holding, net change in aggregate holdings vs prior quarter, multi-fund simultaneous opening flag (3+ funds opening new positions same ticker).
 
 All factors: equal-weight sub-factors within each parent, then sector percentile rank 0-100.
 
 === COMPOSITE + EXTRAS ===
 
-#### 9. Composite Score (factors/composite.py):
-Weighted blend: Momentum 0.20, Quality 0.20, Value 0.15, Estimate Revisions 0.15, Insider Activity 0.10, Growth 0.10, Short Interest 0.05, Institutional Flow 0.05. After blending, re-rank within sector for final 0-100 composite.
-Top quintile = LONG candidates. Bottom quintile = SHORT candidates.
-Output: scored_universe_latest.csv with all sub-factor scorees, composites, LONG/SHORT flag
+#### 9. ﻿﻿﻿Composite Score (factors/composite.py): 
+Weighted blend: Momentum 0.20, Quality 0.20, Value 0.15, Estimate Revisions 0.15, Insider Activity 0.10, Growth 0.10, Short Interest 0.05, Institutional Flow 0.05. After blending, re-rank within sector for final 0-100 composite. Top quintile = LONG candidates. Bottom quintile = SHORT candidates. Output: scored_universe_latest.csv with ALL sub-factor scores, composite, LONG/SHORT flag.
 
-#### 10. egime-Conditional Weights (factors/regime_weights.py):
-Low Vol (VIX < 15): boost momentum 0.20->0.28, cut value 0.15->0.10.
-Normal (15-25): default weights. High Vol (VIX > 25): boost quality 0.20->0.28 and value 0.15->0.22, cut momentum 0.20->0.10.
+#### 10. ﻿﻿﻿﻿Regime-Conditional Weights (factors/regime_weights.py) : 
+Low Vol (VIX < 15): boost momentum 0.20->0.28, cut value 0.15->0.10. Normal (15-25): default weights. High Vol (VIX > 25): boost quality 0.20->0.28 and value 0.15->0.22, cut momentum 0.20->0.10.
+Config flag: regime_conditional_weights.
 
-#### 11. Crowding Detection (factors/crowding.py):
-Synthesize daily factor returns: top-quintile minus bottom-quintile per factor, 60-day rolling. Pairwise correlations between all factor return series. Compare to academic baselines. Flag when deviation > 0.4.
+#### 11. Crowding Detection (factors/crowding-py) :
+Synthesize daily factor returns: top-quintile minus bottom-quintile per factor, 60-day rolling. Pairwise correlations between all factor return series.
+Compare to academic
+baselines (momentum/value ~-0.3, momentum/quality ~+0.1). Flag when deviation > 0.4.
 
-Entry point: run_scoring.py --ticker AAPL for single stock mode.
-Print summary: top 5 shorts, crowding warnings, degenerate factor warnings
+Entry point: run_scoring•py -ticker AAPL for single stock mode.
+Print summary: top 5 longs, top 5 shorts, crowding warnings, degenerate factor warnings.
 
 ---
 
