@@ -4,6 +4,7 @@
 > **Stack:** Anthropic Sonnet 4-5 + Python + SQLite + Streamlit + Alpaca  
 > **Source:** OCR from 15-image slide deck · May 2026  
 > **Scale:** 5 sources · 390K price bars · 50K insider txns · 20K holdings
+
 > source: https://www.youtube.com/watch?v=ANUXcTgrpg0&t=11s
 > source: https://photos.app.goo.gl/9KFyapvKaDfcGTnM8
 ---
