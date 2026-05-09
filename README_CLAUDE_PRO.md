@@ -381,28 +381,29 @@ Build BOTH the reporting engine AND the Streamlit dashboard with JARVIS persona.
 
 ### === REPORTING ENGINE ===
 
-1. Daily P&L Attribution (reporting/pnl_attribution.py):
+#### 1. Daily P&L Attribution (reporting/pnl_attribution.py):
 Decompose: daily_return = beta + sector + factor + alpha_residual. Beta: net_beta *
 SPY_return. Sector: Brinson-style. Factor: regression on factor return spreads. Alpha:
 residual after subtracting all three. Persist to output/daily_attribution.csv.
 
-2. Position Attribution: mark-to-market, FIFO round-trips, best/worst per side.Predictive power: Spearman correlation between entry-time score and realized return.
+#### 2. Position Attribution: mark-to-market, FIFO round-trips, best/worst per side.
+Predictive power: Spearman correlation between entry-time score and realized return.
 
-3. Win/Loss Analysis: win rate, P/L ratio. Sliced by: side, holding period
-(1-5d/5-20d/20-60d/60d+), sector, VIX regime at entry, factor quintile at entry. Streaks.
+#### 3. Win/Loss Analysis: win rate, P/L ratio. 
+Sliced by: side, holding period (1-5d/5-20d/20-60d/60d+), sector, VIX regime at entry, factor quintile at entry. Streaks.
 
-4. Sector-Relative Performance: per sector 90d, your picks alpha. Sum across sectors = total alpha. Track winner/loser sector counts.sector ETF = stock-selection
+#### 4. Sector-Relative Performance: per sector 90d, your picks alpha. 
+Sum across sectors = total alpha. Track winner/loser sector counts.sector ETF = stock-selection
 
-5. Turnover Analytics: trailing 30/90d turnover, annualized, vs budget from config.
+### 5. Turnover Analytics: trailing 30/90d turnover, annualized, vs budget from config.
 Tax estimate via FIFO: short-term gains @ 37%, long-term @ 20%.
 
-6. Tear Sheet: markdown institutional format - metrics
-SPY, monthly returns grid,
-equity curve, drawdown, rolling 12mo Sharpe, factor + sector exposures, turnover.
+#### 6. Tear Sheet: markdown institutional format
+metrics vs SPY, monthly returns grid, equity curve, drawdown, rolling 12mo Sharpe, factor + sector exposures, turnover.
 
-7. Claude Weekly Commentary: JARVIS-authored, fires on configurable weekday (default Fri).
+#### 7. Claude Weekly Commentary: JARVIS-authored, fires on configurable weekday (default Fri).
 
-8. Daily LP Letter: 3-4 paragraphs, letterhead, signature block, compliance footer
+#### 8. Daily LP Letter: 3-4 paragraphs, letterhead, signature block, compliance footer
 
 #### PAGE IV - PERFORMANCE:
 Equity curve vs SPY (rebased to 100), monthly returns grid (green/red heatmap), drawdown chart, P&L attribution bars (Beta/Sector/Factor/Alpha), rolling 12mo Sharpe, sector relative alpha chart with total alpha KPI + winner/loser counts, turnover panel (30d/ annualized/budget/tax), transaction cost panel (estimated vs actual vs model error), best/worst 5 contributors, win/loss panel, Claude weekly commentary card.
@@ -417,7 +418,7 @@ doc ID (MCP-IM-{YYYY}- {MMDD}), date. "CONFIDENTIAL • LIMITED PARTNERS ONLY" s
 
 AUTO-REFRESH: Every 5 minutes during market hours (9:30am - 4:00pm ET) •
 
-DAILY AUTOMATION:
+##### DAILY AUTOMATION:
 macoS launchd plist at ~/Library/LaunchAgents/com.user.hedgefund.daily.plist
 Weekdays at 17:15 local. Runs: run_scoring.py --no-filings --no-13f
 Refreshes prices, short interest, estimates, calendar, rescores all factors. ~10min
